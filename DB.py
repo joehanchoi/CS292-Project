@@ -29,7 +29,7 @@ class DB:
 class Hbase:
 	def __init__(self, db_name):
 		self.db_name = db_name
-		self.connection = happybase.Connection('hadoop-node4.vampire', table_prefix=db_name)
+		self.connection = happybase.Connection('hadoop-node1.vampire', table_prefix=db_name)
 
 	def get_connection(self):
 		return self.connection

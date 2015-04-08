@@ -8,6 +8,7 @@ class Pages:
 		self.cur = self.postgres_obj.cursor()
 		self.hbase = Hbase(DB_NAME)
 		self.create_similarity_hbase_table()
+		self.table = self.hbase.table("pages_similarity")
 	
 	def create_similarity_hbase_table(self):
 		self.hbase_connection = self.hbase.get_connection()
@@ -40,6 +41,22 @@ class Pages:
 				jacc_similarity = (1.0 * len(page2_summary.intersection(page1_summary))) / len(page2_summary.union(page1_summary))
 				sim_pages.put(str(self.pages_row[i][0]), {'paired_page:'+str(self.pages_row[j][0]):str(jacc_similarity)})
 				sim_pages.put(str(self.pages_row[j][0]), {'paired_page:'+str(self.pages_row[i][0]):str(jacc_similarity)})
+
+	def get_id(self,term):
+		q = "SELECT distinct(page_id) FROM med_pages WHERE lower(title) LIKE '%%%s%%'"%(term.lower())
+		return self.postgres_obj.query(q)[0][0]
+
+	def get_title(self,id):
+		q = "SELECT distinct(title) FROM med_pages WHERE page_id = %d"%(id)
+		return self.postgres_obj.query(q)[0][0].lower()
+
+	def query_page(self,id):
+		result = []
+		row = self.table.row(str(id))
+		for page in row:
+			result.append((page[12:],row[page]))
+		return result
+
 def main():
 	load_page = Pages()
 	load_page.loadPages()

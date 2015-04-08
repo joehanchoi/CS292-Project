@@ -23,6 +23,7 @@ def load_wiki(db):
 	con = db.connection()
 	cur = db.cursor()
 	missed = 0
+	i = 0
 
 	for term in med_terms:
 		try:
@@ -53,8 +54,10 @@ def load_wiki(db):
 			categories = ""
 
 		cur.execute("insert into med_pages VALUES (%s, %s, %s, %s, %s)",(int(page.pageid),page.title,page.summary,categories,page.content))
+		i += 1
 	con.commit()
 	print '# unidentifiable pages:', missed
+	print 'Inserted:', i
 
 def main():
 	db = DB(DB_NAME)
