@@ -27,7 +27,7 @@ def spark_similarity(data, stop_words):
 	conf = SparkConf().setAppName('J_Similarity').setMaster('local[4]')#.set("spark.cores.max", "1")
 	sc = SparkContext(conf=conf)
 	input = [(pid, set(re.findall(r"[\w']+", data[pid].lower())).difference(stop_words)) for pid in data.keys() if len(set(re.findall(r"[\w']+", data[pid].lower())).difference(stop_words))>0]
-	result = sc.parallelize(temp_input) \
+	result = sc.parallelize(input) \
 		.keyBy(lambda x:1)
 	result = result.join(result) \
 		.map(lambda x:x[1]) \
