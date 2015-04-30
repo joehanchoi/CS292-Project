@@ -3,6 +3,7 @@ import wikipedia
 import re
 
 def create_table(db):
+	#create table in sql
 	con = db.connection()
 	cur = db.cursor()
 
@@ -14,6 +15,7 @@ def create_table(db):
 	con.commit()
 
 def load_wiki(db):
+	#load up desired terms from csv file
 	med_terms = []
 	with open('snomed_cleaned_term.txt','rb') as f:
 		text = f.readlines()
@@ -26,10 +28,13 @@ def load_wiki(db):
 	i = 0
 
 	for term in med_terms:
+		#look in wikipedia for page associated with term
 		try:
 			page = wikipedia.page(term)
 		except wikipedia.exceptions.DisambiguationError as e:
+			#handle disambiguation error
 			e.options = [t.encode('utf-8') for t in e.options]
+			#prioritize choice if it has "medic" in title, grabs things like "(medicine)"
 			possible = [x for x in e.options if re.search('medic', x.lower())]
 			if possible:
 				try:
@@ -37,22 +42,25 @@ def load_wiki(db):
 				except:
 					missed += 1
 					continue
+			#otherwise take the first choice of term
 			else:
 				try:
 					page = wikipedia.page(e.options[0])
 				except:
 					missed += 1
 					continue
-			#print page.title
+		#if can't find any pages, skip term
 		except wikipedia.exceptions.PageError:
 			missed += 1
 			continue
 
+		#join all the categories by "," to make it a string for input into sql
 		try:
 			categories = ",".join(page.categories)
 		except:
 			categories = ""
 
+		#insert page into sql table
 		cur.execute("insert into med_pages VALUES (%s, %s, %s, %s, %s)",(int(page.pageid),page.title,page.summary,categories,page.content))
 		i += 1
 	con.commit()
