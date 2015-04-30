@@ -68,6 +68,24 @@ class Pages:
 			result.append((page[12:],row[page]))
 		return result
 
+	def getPageLinksList(self, page_id):
+		#get links from link table for a page
+		q ="SELECT links FROM med_pages_umls_subset_links WHERE page_id = %d" % (page_id)
+		links = self.postgres_obj.query(q)
+		if len(list(links)) > 0:
+			return [link.lower() for link in links[0][0].split(',')]
+		else:
+			return []
+
+	def getPageSummaryContent(self, page_id):
+		#get summary and content from table for a page
+		q = "SELECT summary, content FROM med_pages_umls_subset WHERE page_id = %d" % (page_id)
+		page_info = self.postgres_obj.query(q)
+		if len(list(page_info)) > 0:
+			return page_info[0][0], page_info[0][1]
+		else:
+			return []
+
 def main():
 	load_page = Pages()
 	load_page.loadPages()
