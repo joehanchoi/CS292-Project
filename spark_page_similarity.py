@@ -24,7 +24,30 @@ class Pages:
 
 def spark_similarity(data, stop_words):
 	spark_pages = Pages()
-	conf = SparkConf().setAppName('J_Similarity').setMaster('local[4]')#.set("spark.cores.max", "1")
+	conf = SparkConf().setAppName('J_Similarity').setMaster('local[4]')#.set("spark.storage.memoryFraction","0.1")#.set("spark.cores.max", "1")
+	sc = SparkContext(conf=conf)
+	input = [(pid, set(re.findall(r"[\w']+", data[pid].lower())).difference(stop_words)) for pid in data.keys() if len(set(re.findall(r"[\w']+", data[pid].lower())).difference(stop_words))>0]
+	step = int(1.0*len(input)/1000)
+	for i in xrange(0,len(input),step):
+		full = sc.parallelize(input) \
+			.keyBy(lambda x:1)
+		sub = sc.parallelize(input[i:i+step]) \
+			.keyBy(lambda x:1)
+		#result = sc.parallelize(input) \
+			#.keyBy(lambda x:1)
+		#result = result.join(result) \
+		result = sub.join(full) \
+			.map(lambda x:x[1]) \
+			.map(lambda x:((x[0][0], x[1][0]), (1.0 * len(x[0][1].intersection(x[1][1]))) / len(x[0][1].union(x[1][1]))))
+		result = result.collect()
+		print 'Finished partition. Terms finished:', i
+		for pid, sim in result:
+			if sim > 0:
+				spark_pages.insert(pid[0],pid[1],sim)
+
+def spark_test(data, stop_words):
+	spark_pages = Pages()
+	conf = SparkConf().setAppName('J_Similarity').setMaster('local[4]').set("spark.cores.max","1")
 	sc = SparkContext(conf=conf)
 	input = [(pid, set(re.findall(r"[\w']+", data[pid].lower())).difference(stop_words)) for pid in data.keys() if len(set(re.findall(r"[\w']+", data[pid].lower())).difference(stop_words))>0]
 	result = sc.parallelize(input) \
@@ -33,9 +56,6 @@ def spark_similarity(data, stop_words):
 		.map(lambda x:x[1]) \
 		.map(lambda x:((x[0][0], x[1][0]), (1.0 * len(x[0][1].intersection(x[1][1]))) / len(x[0][1].union(x[1][1]))))
 	result = result.collect()
-	for pid, sim in result:
-		if sim > 0:
-			spark_pages.insert(pid[0],pid[1],sim)
 
 def read_sql():
 	with open('stop_words.txt', 'rb') as f:
@@ -70,7 +90,8 @@ def read_json(file_name):
 def main():
 	#data, stop_words = read_json('pages.json')
 	data, stop_words = read_sql()
-	spark_similarity(data, stop_words)
+	spark_test(data, stop_words)
+	#spark_similarity(data, stop_words)
 
 if __name__=='__main__':
 	main()

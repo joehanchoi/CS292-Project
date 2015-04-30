@@ -5,9 +5,14 @@ from page_similarity import Pages
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
+import sys
 
 def main():
-	test_term = 'allergy'
+	#default term
+	test_term = 'embolism'
+	if len(sys.argv) > 1:
+		test_term = sys.argv[1]
+	print 'Generating graph for', test_term
 	graph(test_term)
 
 def add_x_nodes(pages, G, id, i):
@@ -55,7 +60,8 @@ def graph(term):
 	node_size[node_size.index(0.0)]=300
 
 	nx.draw_networkx(G=G,with_labels=True,nodelist=node_list,node_size=node_size,node_color=node_color,font_size=8)
-	plt.savefig("test.png")
+	fig_name = "%s.png" %(term)
+	plt.savefig(fig_name)
 
 if __name__=='__main__':
 	main()
