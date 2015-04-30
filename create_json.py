@@ -2,6 +2,8 @@ from DB import DB, DB_NAME, Hbase
 import collections
 import json
 
+### Creates json called pages.json for MapReduce mr_page_similarity.py
+
 class Table:
         def __init__(self, db_name, table_name, selection_condition=None, limit=None):
                 self.table_name = table_name
@@ -23,9 +25,9 @@ class Table:
 
 
 
-
+# Use UMLS Postgres table and extract values for json
 db = DB(DB_NAME)
-pages = Table(DB_NAME, 'med_pages',None)
+pages = Table(DB_NAME, 'med_pages_UMLS_subset',selection_condition = None,limit=None)
 with open('pages.json', 'w') as outfile:
                 objects_list=[]
                 for line in pages.get_next():
